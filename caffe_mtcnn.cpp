@@ -181,14 +181,12 @@ void main() {
 #endif
 */
 
-//由于我们的调试目录指向了ccdl/x64下，所以需要通过2级目录回到工程目录下
 #define CDRoot "../../"
 
 void main() {
   float means[] = {127.5f, 127.5f, 127.5f};
   float scale_param = 0.0078125;
 
-  //如果使用GPU版本，最后的-1参数给0就好了
   boost::shared_ptr<caffe::Net<float> > pnet(new caffe::Net<float>(
       CDRoot "model/det1.prototxt", caffe::TEST));
   pnet->CopyTrainedLayersFrom(CDRoot "models/det1.caffemodel");
