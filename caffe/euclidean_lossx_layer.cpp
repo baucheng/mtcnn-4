@@ -52,6 +52,8 @@ void EuclideanLossXLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
                             diff + i * inner_num_);
       ++num;
     }
+    if (0 == num)
+      ++num;
     loss = loss / num / Dtype(2);
   } else {
     caffe_sub(

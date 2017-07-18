@@ -32,6 +32,8 @@ void EuclideanLossXLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       loss += dot;
       ++num;
     }
+    if (0 == num)
+      ++num;
     loss = loss / num / Dtype(2);
   } else {
     caffe_gpu_sub(count,
