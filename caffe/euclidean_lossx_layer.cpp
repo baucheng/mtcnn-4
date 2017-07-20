@@ -42,15 +42,15 @@ void EuclideanLossXLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       // we assume unified(ignore) label for single sample,
       // so just check the first element.
       const int label_value = static_cast<int>(label[i * inner_num_]);
-      if (label_value == ignore_label_)
-        continue;
-      caffe_sub(inner_num_,
-                output + i * inner_num_,
-                label + i * inner_num_,
-                diff + i * inner_num_);
-      loss += caffe_cpu_dot(inner_num_, diff + i * inner_num_,
-                            diff + i * inner_num_);
-      ++num;
+      if (label_value != ignore_label_) {
+        caffe_sub(inner_num_,
+                  output + i * inner_num_,
+                  label + i * inner_num_,
+                  diff + i * inner_num_);
+        loss += caffe_cpu_dot(inner_num_, diff + i * inner_num_,
+                              diff + i * inner_num_);
+        ++num;
+      }
     }
     if (0 == num)
       ++num;

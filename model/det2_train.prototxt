@@ -7,7 +7,7 @@ layer {
   top: "label_class"
   top: "label_bbox"
   hdf5_data_param {
-    source: "train_list.txt"
+    source: "/home/dkk/projects/caffe/mtcnn/train_list.txt"
     batch_size: 128
     shuffle: true
   }
@@ -205,7 +205,7 @@ layer {
   name: "cls_loss"
   type: "SoftmaxWithLoss"
   bottom: "conv5-1"
-  bottom: "label"
+  bottom: "label_class"
   top: "cls_loss"
   propagate_down: 1
   propagate_down: 0
@@ -219,7 +219,7 @@ layer {
   name: "cls_acc"
   type: "Accuracy"
   bottom: "conv5-1"
-  bottom: "label"
+  bottom: "label_class"
   top: "cls_acc"
   include {
     phase: TRAIN

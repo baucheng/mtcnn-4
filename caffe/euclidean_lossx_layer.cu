@@ -10,27 +10,27 @@ void EuclideanLossXLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   Dtype loss = 0;
   int count = bottom[0]->count();
-  caffe_set(count, (Dtype)0, diff_.mutable_gpu_data());
+  caffe_gpu_set(count, (Dtype)0, diff_.mutable_gpu_data());
   if (has_ignore_label_) {
     const Dtype* output = bottom[0]->gpu_data();
-    const Dtype* label = bottom[1]->gpu_data();
+    const Dtype* label = bottom[1]->cpu_data();
     Dtype* diff = diff_.mutable_gpu_data();
-    Dtype dot = 0;
     int num = 0;
     for (int i = 0; i < outer_num_; ++i) {
       // we assume unified(ignore) label for single sample,
       // so just check the first element.
       const int label_value = static_cast<int>(label[i * inner_num_]);
-      if (label_value == ignore_label_)
-        continue;
-      caffe_gpu_sub(inner_num_,
-                    output + i * inner_num_,
-                    label + i * inner_num_,
-                    diff + i * inner_num_);
-      caffe_gpu_dot(inner_num_, diff + i * inner_num_,
-                    diff + i * inner_num_, &dot);
-      loss += dot;
-      ++num;
+      if (label_value != ignore_label_) {
+        caffe_gpu_sub(inner_num_,
+                      output + i * inner_num_,
+                      label + i * inner_num_,
+                      diff + i * inner_num_);                    
+        Dtype dot;
+        caffe_gpu_dot(inner_num_, diff + i * inner_num_,
+                      diff + i * inner_num_, &dot);
+        loss += dot;
+        ++num;
+      }
     }
     if (0 == num)
       ++num;
@@ -44,7 +44,7 @@ void EuclideanLossXLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     caffe_gpu_dot(count, diff_.gpu_data(), diff_.gpu_data(), &dot);
     loss = dot / bottom[0]->num() / Dtype(2);
   }
-  top[0]->mutable_gpu_data()[0] = loss;
+  top[0]->mutable_cpu_data()[0] = loss;
 }
 
 template <typename Dtype>
