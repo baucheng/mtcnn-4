@@ -22,7 +22,7 @@ def write_hdf5(file, data, label_class, label_bbox, label_landmarks):
     f['label_landmarks'] = label_landmarks_arr
 
 # list_file format:
-# image_path | label_class label_boundingbox(4) label_landmarks(10)
+# image_path | label_class | label_boundingbox(4) | label_landmarks(10)
 def convert_dataset_to_hdf5(list_file, path_data, path_save,
                             size_hdf5, tag):
   with open(list_file, 'r') as file:
@@ -39,20 +39,22 @@ def convert_dataset_to_hdf5(list_file, path_data, path_save,
       line_split = line.split(" ")
       assert 16 == len(line_split)
       path = line_split[0]
-      path_full = path_data + path
+      path_full = os.path.join(path_data, path)
       datum = cv2.imread(path_full)
       classes = float(line_split[1])
       bbox = [float(x) for x in line_split[2:6]]
       landmarks = [float(x) for x in line_split[6:]]
       if datum is None:
         continue
+      # normalization
+      datum = (datum - 127.5) / 128.0
       data.append(datum)
       label_class.append(classes)
       label_bbox.append(bbox)
       label_landmarks.append(landmarks)
       count_data = count_data + 1
       if 0 == count_data % size_hdf5:
-        path_hdf5 = path_save + tag + str(count_hdf5) + ".h5"
+        path_hdf5 = os.path.join(path_save, tag + str(count_hdf5) + ".h5")
         write_hdf5(path_hdf5, data, label_class, label_bbox, label_landmarks)
         count_hdf5 = count_hdf5 + 1
         data = []
@@ -61,9 +63,8 @@ def convert_dataset_to_hdf5(list_file, path_data, path_save,
         label_landmarks = []
     # handle the rest
     if data:
-      path_hdf5 = path_save + tag + str(count_hdf5) + ".h5"
+      path_hdf5 = os.path.join(path_save, tag + str(count_hdf5) + ".h5")
       write_hdf5(path_hdf5, data, label_class, label_bbox, label_landmarks)
-
 
 def main():
   parser = argparse.ArgumentParser(description = 'Convert dataset to hdf5')

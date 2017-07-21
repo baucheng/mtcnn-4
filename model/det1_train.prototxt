@@ -220,7 +220,7 @@ layer {
   top: "bbox_loss"
   propagate_down: 1
   propagate_down: 0
-  loss_weight: 0.0
+  loss_weight: 0.5
   loss_param {
     ignore_label: -1
   }
