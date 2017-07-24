@@ -11,7 +11,7 @@ using caffe::Blob;
 using namespace cv;
 
 #define mydataFmt float
-#define NumPoint   4
+#define NumPoint   5
 
 struct Bbox {
   float score;
@@ -115,14 +115,14 @@ vector<float> getScales(int w, int h, int minsize = 12) {
 }
 
 void cvMat2Blob(cv::Mat src, Blob<float>* input_layer,
-                const float[] mean, float scale) {
+                const float* mean, float scale) {
   int H = src.rows;
   int W = src.cols;
-  assert(H * W == input_layer->height() * input_layer->width())
+  assert(H * W == input_layer->height() * input_layer->width());
   float* pData = input_layer->mutable_cpu_data();
   int offset = H * W;
-  int H = H;
-  int W = W;
+  //int H = H;
+  //int W = W;
   for(int h = 0; h < H; ++h) {
     for(int w = 0; w < W; ++w) {
       pData[h * W + w + 0 * offset] =
@@ -180,34 +180,33 @@ void main() {
 }
 #endif
 */
+#define modelpath "./model/my_model"
 
-#define CDRoot "../../"
-
-void main() {
+int main(int argc, char** argv) {
   float means[] = {127.5f, 127.5f, 127.5f};
   float scale_param = 0.0078125;
 
   boost::shared_ptr<caffe::Net<float> > pnet(new caffe::Net<float>(
-      CDRoot "model/det1.prototxt", caffe::TEST));
-  pnet->CopyTrainedLayersFrom(CDRoot "models/det1.caffemodel");
+      "./model/det1.prototxt", caffe::TEST));
+  pnet->CopyTrainedLayersFrom(modelpath"/det1.caffemodel");
   // (0.0078125, 0, 3, means, -1);
   boost::shared_ptr<caffe::Net<float> > rnet(new caffe::Net<float>(
-      CDRoot "model/det2.prototxt", caffe::TEST));
-  rnet->CopyTrainedLayersFrom(CDRoot "models/det2.caffemodel");
+      "./model/det2.prototxt", caffe::TEST));
+  rnet->CopyTrainedLayersFrom(modelpath"/det2.caffemodel");
   // (0.0078125, 0, 3, means, -1);
   boost::shared_ptr<caffe::Net<float> > onet(new caffe::Net<float>(
-      CDRoot "model/det3.prototxt", caffe::TEST));
-  onet->CopyTrainedLayersFrom(CDRoot "models/det3.caffemodel");
+      "./model/det3.prototxt", caffe::TEST));
+  onet->CopyTrainedLayersFrom(modelpath"/det3.caffemodel");
   // (0.0078125, 0, 3, means, -1);
 
   // VideoCapture cap(0);
-  double tick = 0;
-  Mat img = imread(CDRoot "00284.jpg");
+  //double tick = 0;
+  Mat img = imread(argv[1]);
   Mat raw_img = img.clone();
   // cap >> raw_img;
 
-  float confs[] = {0.5, 0.6, 0.8};
-  float nmss[] = {0.2, 0.2, 0.2};
+  float confs[] = {0.6, 0.7, 0.9};
+  float nmss[] = {0.6, 0.6, 0.6};
 
   // while for video
   while (!raw_img.empty()) {
@@ -234,13 +233,14 @@ void main() {
       Blob<float>* box = pnet->blob_by_name("conv4-2").get();
 
       int stride = 2;
-      int num = cls_loss->num();
-      int channels = cls_loss->channels();
+      //int num = cls_loss->num();
+      //int channels = cls_loss->channels();
       int height = cls_loss->height();
       int width = cls_loss->width();
       for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
-          float conf = cls_loss->data_at(num, channels, i, j);
+          // float conf = cls_loss->data_at(0, 1, i, j); //?
+          const float conf = cls_loss->cpu_data()[1 * height * width + i + j];
           if (conf >= confs[0]) {
             // box should be fixed {
             int cellx = i;
@@ -325,14 +325,17 @@ void main() {
         rnet->Reshape();
         cvMat2Blob(img2, rnet->input_blobs()[0], means, scale_param);
         rnet->Forward();
-        Blob<float>* BlobData cls = rnet->blob_by_name("prob1").get();
-        int num = cls_loss->num();
-        int channels = cls_loss->channels();
-        float conf = cls->data_at(num, channnels, 1, 1);
+        Blob<float>* cls_loss = rnet->blob_by_name("prob1").get();
+        //int num = cls_loss->num();
+        //int channels = cls_loss->channels();
+        //float conf = cls_loss->data_at(0, 1, 0, 0);
+        int height = cls_loss->height();
+        int width = cls_loss->width();
+        const float conf = cls_loss->cpu_data()[1 * height * width];
         printf("RNet: %f > %f\n", conf, confs[1]);
         if (conf > confs[1]) {
           // box should be fixed {
-          Blob<float>* box = rnet.blob_by_name("conv5-2").get();
+          Blob<float>* box = rnet->blob_by_name("conv5-2").get();
           float lx = box->cpu_data()[0];
           float ly = box->cpu_data()[1];
           float rx = box->cpu_data()[2];
@@ -390,10 +393,13 @@ void main() {
         onet->Reshape();
         cvMat2Blob(img3, onet->input_blobs()[0], means, scale_param);
         onet->Forward();
-        Blob<float>* cls = onet->blob_by_name("prob1").get();
-        int num = cls_loss->num();
-        int channels = cls_loss->channels();
-        float conf = cls->data_at(num, channnels, 1, 1);
+        Blob<float>* cls_loss = onet->blob_by_name("prob1").get();
+        // int num = cls_loss->num();
+        //int channels = cls_loss->channels();
+        //float conf = cls_loss->data_at(0, 1, 0, 0);
+        int height = cls_loss->height();
+        int width = cls_loss->width();
+        const float conf = cls_loss->cpu_data()[1 * height * width];
         printf("ONet: %f > %f\n", conf, confs[2]);
         if (conf > confs[2]) {
           // box should be fixed {
@@ -416,6 +422,7 @@ void main() {
 
           //如果有坐标就使用他
           //WPtr<BlobData> pts = onet.getBlobData("conv6-3");
+          Blob<float>* pts = onet->blob_by_name("conv6-3").get();
           Bbox b;
           b = rnetBoxAll[i];
           b.x1 = newlx;
@@ -426,26 +433,28 @@ void main() {
           b.exist = true;
           b.area = (b.x2 - b.x1)*(b.y2 - b.y1);
 
-          /*
-            for (int k = 0; k < NumPoint; ++k) {
+          for (int k = 0; k < NumPoint; ++k) {
             int xp = k * 2;
             int yp = k * 2 + 1;
-            float x = pts->list[xp] * cropBox.width + cropBox.x;
-            float y = pts->list[yp] * cropBox.height + cropBox.y;
+            float x = pts->cpu_data()[xp] * cropBox.width + cropBox.x;
+            float y = pts->cpu_data()[yp] * cropBox.height + cropBox.y;
             b.ppoint[xp] = x;
             b.ppoint[yp] = y;
-            }
-          */
+          }
+
           onetBoxAll.push_back(b);
           // }
         }
       }
     }
-    nms(onetBoxAll, onetOrderAll, nmss[2], "Union");
+    nms(onetBoxAll, onetOrderAll, nmss[2], "Min");
 
     for (int i = 0; i < onetBoxAll.size(); ++i) {
       if (onetBoxAll[i].exist) {
         cv::rectangle(raw_img, onetBoxAll[i], Scalar(0, 255), 2);
+        for (int j = 0; j < NumPoint; ++j) {
+          cv::circle(raw_img, cv::Point2d(onetBoxAll[i].ppoint[2 * j], onetBoxAll[i].ppoint[2 * j + 1]),2,cv::Scalar(0,0,255),-1);
+        }
       }
     }
 
@@ -457,4 +466,5 @@ void main() {
     break;
     //cap >> raw_img;
   }
+  return 0;
 }

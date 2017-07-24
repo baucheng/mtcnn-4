@@ -6,7 +6,7 @@ PROTO_INCLUDE_DIR := /home/dkk/projects/caffe/build/src
 INCLUDE_DIRS := /home/dkk/projects/caffe/include $(CUDA_INCLUDE_DIR) $(PROTO_INCLUDE_DIR)
 LIBRARY_DIRS := /home/dkk/projects/caffe/build/lib
 
-LIBRARIES += caffe boost_system stdc++ opencv_core opencv_highgui opencv_improc
+LIBRARIES += caffe boost_system stdc++ opencv_core opencv_highgui opencv_imgproc glog
 CXX = g++
 
 WARNINGS := -Wall -Wno-sign-compare
