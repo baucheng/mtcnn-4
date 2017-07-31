@@ -53,7 +53,7 @@ for annotation in annotations:
     assert size == bbox[3] - bbox[1]
     for k in range(len(pts) / 2):
         pts[k*2] = (pts[k*2] - bbox[0]) / float(size);
-        pts[k*2+1] = (pts[k*2+1] - bbox[2]) / float(size);
+        pts[k*2+1] = (pts[k*2+1] - bbox[1]) / float(size);
 
     cropped_im = img[int(bbox[1]) : int(bbox[3]), int(bbox[0]) : int(bbox[2]), :]
     resized_im = cv2.resize(cropped_im, (stdsize, stdsize), interpolation=cv2.INTER_LINEAR)
