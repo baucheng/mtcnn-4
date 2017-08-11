@@ -108,7 +108,8 @@ class EuclideanLossXLayer : public LossLayer<Dtype> {
   // The label indicating that an instance should be ignored.
   int ignore_label_;
 
-  int label_axis_, outer_num_, inner_num_;
+  int num_, channels_;
+  int count_valid_;
 };
 
 }  // namespace caffe
