@@ -19,10 +19,8 @@ Prepare training data (folder train/train_prepare), we use P-Net (author's model
 Train (folder train):  
 ./train_onet.sh
 
-Note:  
-The training data generate python script is modified from [DuinoDu/mtcnn](https://github.com/DuinoDu/mtcnn), so I recommend using his demo.py for test.
-
-We test our trained O-Net model on 300-W dataset, here is some samples results:  
+Test  
+The training data generate python script is modified from [DuinoDu/mtcnn](https://github.com/DuinoDu/mtcnn), so I recommend using his demo.py for test. Replace O-Net model with my trained O-Net model and test on 300-W dataset, here is some samples results:  
 ![image](https://github.com/daikankan/mtcnn/blob/master/test/124212_1.jpg)  
 ![image](https://github.com/daikankan/mtcnn/blob/master/test/79378097_1.jpg)  
 ![image](https://github.com/daikankan/mtcnn/blob/master/test/1051618982_1.jpg)  
