@@ -9,7 +9,7 @@ My label list is as follows:
 Negtives and positives are for face classification tasks, positives and part faces are used for bounding box regression, and landmark faces are used for facial landmark localization. You should add the "EuclideanLossX" layer (folder layer, only GPU version) to your original caffe for training using my label format.
 
 Prepare training data (folder train/train_prepare), we use P-Net (author's model) and R-Net (author's model) to detect faces from WIDER FACE to collect positives, negatives and part faces while landmark faces are detected from CelebA:  
-1: Download wider-face and celeba dataset.  
+1: download wider-face and celeba dataset.  
 2: use gen_onet_widerface.py to generate negative, positive and part samples.  
 3: use gen_onet_celeba.py to generate landmark samples.  
 4: use get_label_list.sh to get subset in order to keep the ratio (3:1:1:2).  
@@ -23,7 +23,7 @@ Note:
 The training data generate python script is modified from [DuinoDu/mtcnn](https://github.com/DuinoDu/mtcnn), so I recommend using his demo.py for test.
 
 We test our trained O-Net model on 300-W dataset, here is some samples results:  
-![image](https://github.com/daikankan/mtcnn/blob/master/test/124212_1.jpg)  
-![image](https://github.com/daikankan/mtcnn/blob/master/test/79378097_1.jpg)  
-![image](https://github.com/daikankan/mtcnn/blob/master/test/1051618982_1.jpg)  
-![image](https://github.com/daikankan/mtcnn/blob/master/test/5106695994_1.jpg)  
+![1](https://github.com/daikankan/mtcnn/blob/master/test/124212_1.jpg)  
+![2](https://github.com/daikankan/mtcnn/blob/master/test/79378097_1.jpg)  
+![3](https://github.com/daikankan/mtcnn/blob/master/test/1051618982_1.jpg)  
+![4](https://github.com/daikankan/mtcnn/blob/master/test/5106695994_1.jpg)  
