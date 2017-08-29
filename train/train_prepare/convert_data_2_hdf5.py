@@ -86,7 +86,7 @@ def main():
   parser.add_argument('path_data', help = 'Path to original dataset')
   parser.add_argument('path_save', help = 'Path to save hdf5')
   parser.add_argument('-s', '--size_hdf5', type = int,
-                      help = 'Batch size of hdf5, Default: 2048')
+                      help = 'Batch size of hdf5, Default: 4096')
   parser.add_argument('-t', '--tag', type = str,
                       help = 'Specify train, test or validation, Default: train_')
   parser.set_defaults(size_hdf5 = 4096, tag = 'train_')
