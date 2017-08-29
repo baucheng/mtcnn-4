@@ -22,3 +22,8 @@ Train (folder train):
 Note:  
 The training data generate python script is modified from [DuinoDu/mtcnn](https://github.com/DuinoDu/mtcnn), so I recommend using his demo.py for test.
 
+We test our trained O-Net model on 300-W dataset, here is some samples results:  
+![image](https://github.com/daikankan/mtcnn/test/124212_1.jpg)  
+![image](https://github.com/daikankan/mtcnn/test/79378097_1.jpg)  
+![image](https://github.com/daikankan/mtcnn/test/1051618982_1.jpg)  
+![image](https://github.com/daikankan/mtcnn/test/5106695994_1.jpg)  
