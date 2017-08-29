@@ -1,7 +1,6 @@
 I'm trying the training process of MTCNN only for O-Net, not reach the precision compare to author's model.
 
-My label list is as follows:
-
+My label list is as follows:  
 48/negative/0.jpg 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  
 48/positive/0.jpg 1 0.055859 0.027310 -0.052455 0.114732 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  
 48/part/0.jpg -1 0.059258 -0.119191 0.208781 0.282666 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  
@@ -17,7 +16,7 @@ Prepare training data (folder train/train_prepare), we use P-Net and R-Net to de
 5: you'd better use show_label.py to check if the label data are correct.  
 6: use convert_data_2_hdf5.py to convert training samples to hdf5 files.  
 
-Train (folder train):
+Train (folder train):  
 ./train_onet.sh
 
 Note:
