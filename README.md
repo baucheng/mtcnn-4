@@ -19,6 +19,6 @@ Prepare training data (folder train/train_prepare), we use P-Net (author's model
 Train (folder train):  
 ./train_onet.sh
 
-Note:
+Note:  
 The training data generate python script is modified from [DuinoDu/mtcnn](https://github.com/DuinoDu/mtcnn), so I recommend using his demo.py for test.
 
