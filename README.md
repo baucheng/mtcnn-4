@@ -1,4 +1,4 @@
-I'm trying the training process of MTCNN only for O-Net, not reach the precision compare to author's model.
+I'm trying the training process of MTCNN only for O-Net, not yet reached the author's precision.
 
 My label list is as follows:  
 48/negative/0.jpg 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  
@@ -8,7 +8,7 @@ My label list is as follows:
 
 Negtives and positives are for face classification tasks, positives and part faces are used for bounding box regression, and landmark faces are used for facial landmark localization. You should add the "EuclideanLossX" layer (folder layer) to your original caffe for training using my label format.
 
-Prepare training data (folder train/train_prepare), we use P-Net and R-Net to detect faces from WIDER FACE to collect positives, negatives and part faces while landmark faces are detected from CelebA:  
+Prepare training data (folder train/train_prepare), we use P-Net (author's model) and R-Net (author's model) to detect faces from WIDER FACE to collect positives, negatives and part faces while landmark faces are detected from CelebA:  
 1: Download wider-face and celeba dataset.  
 2: use gen_onet_widerface.py to generate negative, positive and part samples.  
 3: use gen_onet_celeba.py to generate landmark samples.  
