@@ -89,7 +89,7 @@ def main():
                       help = 'Batch size of hdf5, Default: 2048')
   parser.add_argument('-t', '--tag', type = str,
                       help = 'Specify train, test or validation, Default: train_')
-  parser.set_defaults(size_hdf5 = 256, tag = 'train_')
+  parser.set_defaults(size_hdf5 = 4096, tag = 'train_')
   args = parser.parse_args()
 
   list_file = args.list_file

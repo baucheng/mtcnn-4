@@ -8,15 +8,19 @@ def show_bbox_landmark(list_file, path_data):
     annotations = f.readlines()
   num = len(annotations)
   print "%d pics in total" % num
-  random.shuffle(annotations)
+  # random.shuffle(annotations)
 
   for line in annotations:
     line_split = line.strip().split(' ')
+    print line_split[0]
     path_full = os.path.join(path_data, line_split[0])
     datum = cv2.imread(path_full)
     classes = float(line_split[1])
     bbox = [float(x) for x in line_split[2:6]]
     landmarks = [float(x) for x in line_split[6:]]
+    print classes
+    print bbox
+    print landmarks
 
     (h, w, c) = datum.shape
 

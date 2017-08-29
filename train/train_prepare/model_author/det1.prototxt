@@ -1,20 +1,9 @@
 name: "PNet"
-
-layer {
-  name: "data"
-  type: "HDF5Data"
-  top: "data"
-  top: "label_class"
-  top: "label_bbox"
-  hdf5_data_param {
-    source: "/home/dkk/projects/caffe/mtcnn/train_list.txt"
-    batch_size: 512
-    shuffle: true
-  }
-  include {
-    phase: TRAIN
-  }
-}
+input: "data"
+input_dim: 1
+input_dim: 3
+input_dim: 12
+input_dim: 12
 
 layer {
   name: "conv1"
@@ -42,14 +31,12 @@ layer {
     }
   }
 }
-
 layer {
   name: "PReLU1"
   type: "PReLU"
   bottom: "conv1"
   top: "conv1"
 }
-
 layer {
   name: "pool1"
   type: "Pooling"
@@ -88,7 +75,6 @@ layer {
     }
   }
 }
-
 layer {
   name: "PReLU2"
   type: "PReLU"
@@ -122,13 +108,13 @@ layer {
     }
   }
 }
-
 layer {
   name: "PReLU3"
   type: "PReLU"
   bottom: "conv3"
   top: "conv3"
 }
+
 
 layer {
   name: "conv4-1"
@@ -158,34 +144,6 @@ layer {
 }
 
 layer {
-  name: "cls_loss"
-  type: "SoftmaxWithLoss"
-  bottom: "conv4-1"
-  bottom: "label_class"
-  top: "cls_loss"
-  propagate_down: 1
-  propagate_down: 0
-  loss_weight: 1
-  loss_param{
-    ignore_label: -1
-  }
-}
-
-layer {
-  name: "cls_acc"
-  type: "Accuracy"
-  bottom: "conv4-1"
-  bottom: "label_class"
-  top: "cls_acc"
-  include {
-    phase: TRAIN
-  }
-  accuracy_param{
-    ignore_label: -1
-  }
-}
-
-layer {
   name: "conv4-2"
   type: "Convolution"
   bottom: "conv3"
@@ -211,17 +169,9 @@ layer {
     }
   }
 }
-
 layer {
-  name: "bbox_loss"
-  type: "EuclideanLossX"
-  bottom: "conv4-2"
-  bottom: "label_bbox"
-  top: "bbox_loss"
-  propagate_down: 1
-  propagate_down: 0
-  loss_weight: 0.5
-  loss_param {
-    ignore_label: -1
-  }
+  name: "prob1"
+  type: "Softmax"
+  bottom: "conv4-1"
+  top: "prob1"
 }

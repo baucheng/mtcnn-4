@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import _init_paths
 import caffe
 import cv2
 import numpy as np
-#from python_wrapper import *
 import os
+import numpy.random as npr
+import copy
+import random
 
 def bbreg(boundingbox, reg):
     reg = reg.T 
@@ -196,10 +197,23 @@ def drawBoxes(im, boxes):
         cv2.rectangle(im, (int(x1[i]), int(y1[i])), (int(x2[i]), int(y2[i])), (0,255,0), 1)
     return im
 
+def drawBoxes_align(im, boxe):
+    x1 = boxe[0]
+    y1 = boxe[1]
+    x2 = boxe[2]
+    y2 = boxe[3]
+    cv2.rectangle(im, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 1)
+    return im
+
 def drawlandmark(im, points):
     for i in range(points.shape[0]):
         for j in range(5):
             cv2.circle(im, (int(points[i][j]), int(points[i][j+5])), 2, (255,0,0))
+    return im
+
+def drawlandmark_align(im, point):
+    for j in range(5):
+        cv2.circle(im, (int(point[j*2]), int(point[j*2+1])), 2, (255,0,0))
     return im
 
 
@@ -339,45 +353,37 @@ def detect_face(img, minsize, PNet, RNet, ONet, threshold, fastresize, factor):
         
         mv = out['conv5-2'][pass_t, :].T
         #print "mv", mv
+        #print total_boxes.shape[0]
         if total_boxes.shape[0] > 0:
-            pick = nms(total_boxes, 0.7, 'Union')
-            # print 'pick', pick
-            if len(pick) > 0:
-                total_boxes = total_boxes[pick, :]
-                # print "[6]:", total_boxes.shape[0]
-                total_boxes = bbreg(total_boxes, mv[:, pick])
-                # print "[7]:", total_boxes.shape[0]
-                total_boxes = rerec(total_boxes)
-                # print "[8]:", total_boxes.shape[0]
-
+              # print "[6]:", total_boxes.shape[0]
+              total_boxes = bbreg(total_boxes, mv[:, :])
+              # print "[7]:", total_boxes.shape[0]
+              total_boxes = rerec(total_boxes)
+              # print "[8]:", total_boxes.shape[0]
     return total_boxes
 
-
-
-
 def main():
-    img_dir = "/home/dkk/projects/caffe_mtcnn/data/wider-face/WIDER_train/images/"
-    imglistfile = "wider_face_train.txt"
-    with open(imglistfile, 'r') as f:
+    img_dir = "./celeba/img_celeba/"
+    anno_file = "./celeba/mtcnn_train_label.txt"
+    with open(anno_file, 'r') as f:
         annotations = f.readlines()
     num = len(annotations)
     print "%d pics in total" % num
+    #random.shuffle(annotations)
 
-    neg_save_dir = "./48/negative/"
-    pos_save_dir = "./48/positive/"
-    part_save_dir = "./48/part/"
     image_size = 48
-    f1 = open('./48/pos_48.txt', 'w')
-    f2 = open('./48/neg_48.txt', 'w')
-    f3 = open('./48/part_48.txt', 'w')
+    landmark_save_dir = "./48/landmark/"
+    if not os.path.exists(landmark_save_dir):
+      os.mkdir(landmark_save_dir)
+    # save_dir = "./" + str(image_size)
+    f1 = open('./48/landmark.txt', 'w')
 
-    p_idx = 0  # positive
-    n_idx = 0  # negative
-    d_idx = 0  # dont care
+    l_idx = 0  # landmark
+    l_index = 0
     image_idx = 0
 
-    minsize = 20
-    caffe_model_path = "./model"
+    minsize = 80
+    caffe_model_path = "./model_author"
     threshold = [0.6, 0.7, 0.7]
     factor = 0.709
     
@@ -390,14 +396,21 @@ def main():
     for annotation in annotations:
         # imgpath = imgpath.split('\n')[0]
         annotation = annotation.strip().split(' ')
-        bbox = map(float, annotation[1:])
-        gts = np.array(bbox, dtype=np.float32).reshape(-1, 4)
-        img_path = img_dir + annotation[0] + '.jpg'
+
+        im_path = annotation[0]
+        # bbox = map(float, annotation[1:-10])
+        pts = map(float, annotation[5:])
+        # boxes = np.array(bbox, dtype=np.float32).reshape(-1, 4)
+        im_path = img_dir + im_path
+        backupPts = pts[:]
 
         #print "######\n", img_path
-        print image_idx
-        image_idx += 1
-        img = cv2.imread(img_path)
+        if image_idx % 1000 == 0:
+          print "(%s products) %s / %s" % (l_idx, image_idx, num)
+        image_idx = image_idx + 1
+        img = cv2.imread(im_path)
+        h = img.shape[0]
+        w = img.shape[1]
         img_matlab = img.copy()
         tmp = img_matlab[:,:,2].copy()
         img_matlab[:,:,2] = img_matlab[:,:,0]
@@ -407,71 +420,113 @@ def main():
 
         #img = drawBoxes(img, boundingboxes)
         #cv2.imshow('img', img)
-        # cv2.waitKey(1000)
+        #cv2.waitKey(1000)
+        n = boundingboxes.shape[0]
 
+        #print "num", n
+        #pts_w_center = (pts[0] + pts[2] + pts[6] + pts[8]) / 4
+        #pts_h_center = (pts[1] + pts[3] + pts[7] + pts[9]) / 4
         # generate positive,negative,part samples
-        for box in boundingboxes:
-            x_left, y_top, x_right, y_bottom, _ = box
+        for i in range(n):
+            #print "i", i
+            x_left = boundingboxes[i][0]
+            y_top = boundingboxes[i][1]
+            x_right = boundingboxes[i][2]
+            y_bottom = boundingboxes[i][3]
             crop_w = x_right - x_left + 1
             crop_h = y_bottom - y_top + 1
+            assert crop_w == crop_h
+            #print "i box", x_left, y_top, x_right, y_bottom
+            #print "center", pts_w_center, pts_h_center
+
             # ignore box that is too small or beyond image border
-            if crop_w < image_size / 2 or crop_h < image_size / 2:
+            if crop_w < 40 or x_left < 0 or y_top < 0 or x_right > w or y_bottom > h:
                 continue
-            if x_left < 0 or y_top < 0:
+            b_valid = 0
+            if pts[0] > x_left and pts[0] < x_right and pts[1] > y_top and pts[1] < y_bottom:
+                b_valid = b_valid + 1
+            if pts[2] > x_left and pts[2] < x_right and pts[3] > y_top and pts[3] < y_bottom:
+                b_valid = b_valid + 1
+            if pts[4] > x_left and pts[4] < x_right and pts[5] > y_top and pts[5] < y_bottom:
+                b_valid = b_valid + 1
+            if pts[6] > x_left and pts[6] < x_right and pts[7] > y_top and pts[7] < y_bottom:
+                b_valid = b_valid + 1
+            if pts[8] > x_left and pts[8] < x_right and pts[9] > y_top and pts[9] < y_bottom:
+                b_valid = b_valid + 1
+
+            if b_valid < 5:
+                #print "44"
                 continue
 
-            # compute intersection over union(IoU) between current box and all gt boxes
-            Iou = IoU(box, gts)
-            cropped_im = img[int(y_top):int(y_bottom + 1) , int(x_left):int(x_right + 1) ]
-            resized_im = cv2.resize(cropped_im, (image_size, image_size), interpolation=cv2.INTER_LINEAR)
-            #try:
-            #    resized_im = cv2.resize(cropped_im, (image_size, image_size), interpolation=cv2.INTER_LINEAR)
-            #except  Exception as e:
-            #    print " 1 "
-            #    print e
+            # show image
+            #img1 = drawBoxes_align(img, box)
+            #img1 = drawlandmark_align(img1, pts)
+            #cv2.imshow('img', img1)
+            #cv2.waitKey(1000)
 
-            # save negative images and write label
-            if np.max(Iou) < 0.3:
-                # Iou with all gts must below 0.3
-                save_file = os.path.join(neg_save_dir, "%s.jpg" % n_idx)
-                f2.write("%s/negative/%s.jpg" % (image_size, n_idx) + ' 0')
-                f2.write(" -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1\n")
-                cv2.imwrite(save_file, resized_im)
-                n_idx += 1
-            else:
-                # find gt_box with the highest iou
-                idx = np.argmax(Iou)
-                assigned_gt = gts[idx]
-                x1, y1, x2, y2 = assigned_gt
+            # our method, x0,y0,x1,y1,x2,y2,x3,y3,x4,y4
+            #for k in range(len(pts) / 2):
+            #    pts[k * 2] = (pts[k * 2] - x_left) / float(crop_w);
+            #    pts[k * 2 + 1] = (pts[k * 2 + 1] - y_top) / float(crop_h);
 
-                # compute bbox reg label
-                offset_x1 = (x1 - x_left) / float(crop_w)
-                offset_y1 = (y1 - y_top) / float(crop_h)
-                # offset_x2 = (x2 - x_left) / float(crop_w)
-                # offset_y2 = (y2 - y_top) / float(crop_h)
-                offset_x2 = (x2 - x_right)  / float(crop_w)
-                offset_y2 = (y2 - y_bottom )/ float(crop_h)
+            #author method, x0,x1,x2,x3,x4,y0,y1,y2,y3,y4
+            ptss = pts[:]
+            for k in range(len(pts) / 2):
+                ptss[k] = (pts[k * 2] - x_left) / float(crop_w);
+                ptss[5+k] = (pts[k * 2 + 1] - y_top) / float(crop_h);
 
-                # save positive and part-face images and write labels
-                if np.max(Iou) >= 0.65:
-                    save_file = os.path.join(pos_save_dir, "%s.jpg" % p_idx)
-                    f1.write("%s/positive/%s.jpg" % (image_size, p_idx) + ' 1 %.6f %.6f %.6f %.6f' % (offset_x1, offset_y1, offset_x2, offset_y2))
-                    f1.write(" -1 -1 -1 -1 -1 -1 -1 -1 -1 -1\n")
-                    cv2.imwrite(save_file, resized_im)
-                    p_idx += 1
+            cropped_im = img[int(y_top):int(y_bottom+1), int(x_left):int(x_right+1)]
+            #h,w,c = cropped_im.shape
+            #print x_left, y_top, x_right, y_bottom
+            #print h,w,c
 
-                elif np.max(Iou) >= 0.4:
-                    save_file = os.path.join(part_save_dir, "%s.jpg" % d_idx)
-                    f3.write("%s/part/%s.jpg" % (image_size, d_idx) + ' -1 %.6f %.6f %.6f %.6f' % (offset_x1, offset_y1, offset_x2, offset_y2))
-                    f3.write(" -1 -1 -1 -1 -1 -1 -1 -1 -1 -1\n")
-                    cv2.imwrite(save_file, resized_im)
-                    d_idx += 1
+            resized_im = cv2.resize(cropped_im, (48, 48))
+
+            # box_ = box.reshape(1, -1)
+            save_file = os.path.join(landmark_save_dir, "%s.jpg" % l_idx)
+            f1.write(str(image_size) + "/landmark/%s.jpg" % l_idx + ' -1 -1 -1 -1 -1')
+
+            for k in range(len(ptss)):
+                f1.write(" %6f" % ptss[k])
+            f1.write("\n")
+            cv2.imwrite(save_file, resized_im)
+            l_idx = l_idx + 1
 
 
-    f.close()
+            # jingxiang
+            iLR = copy.deepcopy(resized_im)
+            resized_h = resized_im.shape[0]
+            resized_w = resized_im.shape[1]
+            for i in range(resized_h):
+               for j in range(resized_w):
+                   iLR[i,resized_w-1-j]=resized_im[i,j]
+            save_file = os.path.join(landmark_save_dir, "%s.jpg" % l_idx)
+            f1.write(str(image_size) + "/landmark/%s.jpg" % l_idx + ' -1 -1 -1 -1 -1')
+            ptssr = pts[:]
+            ptssr[0] = 1-ptss[1]
+            ptssr[1] = 1-ptss[0]
+            ptssr[2] = 1-ptss[2]
+            ptssr[3] = 1-ptss[4]
+            ptssr[4] = 1-ptss[3]
+            ptssr[5] = ptss[6]
+            ptssr[6] = ptss[5]
+            ptssr[7] = ptss[7]
+            ptssr[8] = ptss[9]
+            ptssr[9] = ptss[8]
+            for k in range(len(ptssr)):
+                f1.write(" %6f" % ptssr[k])
+            f1.write("\n")
+            cv2.imwrite(save_file, iLR)
+            l_idx = l_idx + 1
+
+            '''
+            #print "ii", i
+            #print "l_idx", l_idx
+            '''
+
+
     f1.close()
-    f2.close()
-    f3.close()
+
 
 if __name__ == "__main__":
     main()
