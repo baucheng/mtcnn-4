@@ -20,5 +20,5 @@ Train (folder train):
 ./train_onet.sh
 
 Note:
-The training data generate python script is modified from DuinoDu/mtcnn, so I recommend using his demo.py for test.
+The training data generate python script is modified from https://github.com/DuinoDu/mtcnn, so I recommend using his demo.py for test.
 
